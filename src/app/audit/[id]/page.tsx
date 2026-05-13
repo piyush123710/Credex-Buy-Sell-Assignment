@@ -10,7 +10,13 @@ import {
   Download, 
   CheckCircle2, 
   Zap, 
-  MessageSquare
+  MessageSquare,
+  BarChart3,
+  ArrowUpRight,
+  Store,
+  Handshake,
+  TrendingUp,
+  TrendingDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -84,6 +90,8 @@ export default function AuditResultsPage() {
   const hasHighSavings = result.totalMonthlySavings > 500;
   const isOptimal = result.totalMonthlySavings < 50;
 
+  const currencySymbol = result.currency === 'EUR' ? '€' : result.currency === 'GBP' ? '£' : '$';
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black py-20 px-6">
       <div className="max-w-5xl mx-auto space-y-12">
@@ -122,22 +130,71 @@ export default function AuditResultsPage() {
               <p className="text-indigo-100 text-lg max-w-md">
                 {isOptimal 
                   ? "Great job! You&apos;re already on the most efficient plans for your current toolset." 
-                  : `You could be saving $${result.totalMonthlySavings.toLocaleString()} every single month by making a few simple changes.`}
+                  : `You could be saving ${currencySymbol}${Math.round(result.totalMonthlySavings).toLocaleString()} every single month.`}
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-center">
                   <div className="text-indigo-200 text-sm font-bold uppercase mb-1">Monthly Savings</div>
-                  <div className="text-4xl font-black tracking-tight">${result.totalMonthlySavings.toLocaleString()}</div>
+                  <div className="text-4xl font-black tracking-tight">{currencySymbol}{Math.round(result.totalMonthlySavings).toLocaleString()}</div>
                </div>
                <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-center">
                   <div className="text-indigo-200 text-sm font-bold uppercase mb-1">Annual Savings</div>
-                  <div className="text-4xl font-black tracking-tight">${result.totalAnnualSavings.toLocaleString()}</div>
+                  <div className="text-4xl font-black tracking-tight">{currencySymbol}{Math.round(result.totalAnnualSavings).toLocaleString()}</div>
                </div>
             </div>
           </div>
         </motion.div>
+
+        {/* Benchmarking Section */}
+        {result.benchmark && (
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="md:col-span-2 overflow-hidden">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-indigo-600" />
+                  Industry Benchmarking
+                </CardTitle>
+                <CardDescription>How your spend compares to similar startups</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="relative h-4 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                   <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${result.benchmark.percentile}%` }}
+                    transition={{ duration: 1, delay: 0.5 }}
+                    className={`h-full ${
+                      result.benchmark.status === 'optimal' ? 'bg-green-500' : 
+                      result.benchmark.status === 'overspending' ? 'bg-red-500' : 'bg-indigo-500'
+                    }`}
+                   />
+                   <div className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-0.5 bg-white/50" />
+                </div>
+                <div className="flex justify-between text-xs font-bold uppercase text-zinc-400">
+                   <span>Lower Spend</span>
+                   <span>Median</span>
+                   <span>Higher Spend</span>
+                </div>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 text-center">
+                  Your team is in the <span className="font-bold text-indigo-600 dark:text-indigo-400">{result.benchmark.percentile}th percentile</span> of AI efficiency. 
+                  {result.benchmark.status === 'optimal' ? ' You are leading the pack.' : result.benchmark.status === 'overspending' ? ' There is significant room for optimization.' : ' You are right in line with industry peers.'}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="flex flex-col justify-center items-center p-8 text-center bg-zinc-900 text-white border-none">
+               <div className="text-indigo-400 text-xs font-bold uppercase mb-2">Spend Per Seat</div>
+               <div className="text-5xl font-black mb-2">{currencySymbol}{Math.round(result.benchmark.averageSpendPerSeat)}</div>
+               <div className="text-zinc-400 text-sm">vs {currencySymbol}{Math.round(result.benchmark.industryBenchmark)} industry avg</div>
+               <div className={`mt-6 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${
+                 result.benchmark.status === 'optimal' ? 'bg-green-500/20 text-green-400' :
+                 result.benchmark.status === 'overspending' ? 'bg-red-500/20 text-red-400' : 'bg-indigo-500/20 text-indigo-400'
+               }`}>
+                 {result.benchmark.status.toUpperCase()}
+               </div>
+            </Card>
+          </section>
+        )}
 
         {/* AI Summary and Lead Capture Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -190,10 +247,61 @@ export default function AuditResultsPage() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {result.optimizations.map((opt, i) => (
-              <OptimizationCard key={i} optimization={opt} index={i} />
+              <OptimizationCard key={i} optimization={opt} index={i} currencySymbol={currencySymbol} />
             ))}
           </div>
         </div>
+
+        {/* Marketplace Section */}
+        <section className="space-y-6">
+           <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Store className="w-6 h-6 text-indigo-600" />
+                Credex Credit Marketplace
+              </h2>
+              <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded">BETA</span>
+           </div>
+           
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="group hover:border-indigo-500 transition-all cursor-pointer overflow-hidden relative">
+                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <TrendingUp className="w-24 h-24" />
+                 </div>
+                 <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                       <ArrowUpRight className="w-5 h-5 text-indigo-600" />
+                       Buy Discounted Credits
+                    </CardTitle>
+                    <CardDescription>Source credits from companies with excess inventory</CardDescription>
+                 </CardHeader>
+                 <CardContent>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+                       We&apos;ve identified {result.optimizations.length} tools in your stack that are currently trading at <strong>15-25% off</strong> retail on our secondary market.
+                    </p>
+                    <Button variant="outline" className="w-full group-hover:bg-indigo-600 group-hover:text-white transition-colors">View Marketplace Pricing</Button>
+                 </CardContent>
+              </Card>
+
+              <Card className="group hover:border-violet-500 transition-all cursor-pointer overflow-hidden relative">
+                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <Handshake className="w-24 h-24" />
+                 </div>
+                 <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                       <TrendingDown className="w-5 h-5 text-violet-600" />
+                       Sell Your Excess Capacity
+                    </CardTitle>
+                    <CardDescription>Monetize unused seats or pre-paid credits</CardDescription>
+                 </CardHeader>
+                 <CardContent>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+                       If you have more seats than active users, you can list them on Credex and recover <strong>50-70%</strong> of the sunk cost.
+                    </p>
+                    <Button variant="outline" className="w-full group-hover:bg-violet-600 group-hover:text-white transition-colors">List My Excess Credits</Button>
+                 </CardContent>
+              </Card>
+           </div>
+        </section>
 
         {/* Credex CTA */}
         {hasHighSavings && (
@@ -236,7 +344,7 @@ export default function AuditResultsPage() {
   );
 }
 
-function OptimizationCard({ optimization, index }: { optimization: Optimization, index: number }) {
+function OptimizationCard({ optimization, index, currencySymbol }: { optimization: Optimization, index: number, currencySymbol: string }) {
   const isPositive = optimization.potentialSavings > 0;
 
   return (
@@ -251,7 +359,7 @@ function OptimizationCard({ optimization, index }: { optimization: Optimization,
             <CardTitle className="text-xl">{optimization.toolName}</CardTitle>
             {isPositive ? (
               <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold rounded-md">
-                Save ${optimization.potentialSavings}/mo
+                Save {currencySymbol}{Math.round(optimization.potentialSavings)}/mo
               </span>
             ) : (
               <span className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-xs font-bold rounded-md">
@@ -260,7 +368,7 @@ function OptimizationCard({ optimization, index }: { optimization: Optimization,
             )}
           </div>
           <CardDescription>
-            Current Spend: ${optimization.currentSpend}/mo
+            Current Spend: {currencySymbol}{Math.round(optimization.currentSpend)}/mo
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

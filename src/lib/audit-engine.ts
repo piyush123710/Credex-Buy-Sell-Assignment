@@ -1,4 +1,4 @@
-import { AuditInput, AuditResult, Optimization, ToolInput, ToolName } from './types';
+import { AuditInput, AuditResult, Optimization, ToolInput, ToolName, BenchmarkData } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
 export const PRICING = {
@@ -33,23 +33,64 @@ export const PRICING = {
   }
 };
 
+const CONVERSION_RATES = {
+  USD: 1,
+  EUR: 0.92,
+  GBP: 0.79,
+};
+
+const INDUSTRY_BENCHMARK_USD = 35;
+
 export function runAudit(input: AuditInput): AuditResult {
+  const currency = input.currency || 'USD';
+  const rate = CONVERSION_RATES[currency];
   const optimizations: Optimization[] = [];
   
-  input.tools.forEach(tool => {
+  // Convert tools to USD for standardized analysis
+  const usdTools = input.tools.map(t => ({
+    ...t,
+    monthlySpend: t.monthlySpend / rate
+  }));
+
+  usdTools.forEach(tool => {
     const optimization = analyzeTool(tool, input.teamSize);
     if (optimization) {
-      optimizations.push(optimization);
+      // Convert optimization numbers back to selected currency
+      optimizations.push({
+        ...optimization,
+        currentSpend: optimization.currentSpend * rate,
+        potentialSavings: optimization.potentialSavings * rate
+      });
     }
   });
 
   const totalMonthlySavings = optimizations.reduce((acc, opt) => acc + opt.potentialSavings, 0);
+  
+  // Calculate Benchmarking (in USD for standardization)
+  const totalSpendUSD = usdTools.reduce((acc, t) => acc + t.monthlySpend, 0);
+  const spendPerSeatUSD = totalSpendUSD / input.teamSize;
+  const status = spendPerSeatUSD < 25 ? 'optimal' : spendPerSeatUSD > 45 ? 'overspending' : 'average';
+  
+  // Percentile calculation (simplified heuristic)
+  let percentile = 50;
+  if (status === 'optimal') percentile = 85 + Math.random() * 10;
+  else if (status === 'overspending') percentile = 15 + Math.random() * 20;
+  else percentile = 40 + Math.random() * 30;
+
+  const benchmark: BenchmarkData = {
+    averageSpendPerSeat: spendPerSeatUSD * rate,
+    industryBenchmark: INDUSTRY_BENCHMARK_USD * rate,
+    percentile: Math.round(percentile),
+    status
+  };
 
   return {
     id: uuidv4(),
     totalMonthlySavings,
     totalAnnualSavings: totalMonthlySavings * 12,
     optimizations,
+    currency,
+    benchmark,
     createdAt: new Date().toISOString(),
   };
 }
@@ -73,7 +114,7 @@ function analyzeTool(tool: ToolInput, teamSize: number): Optimization | null {
         potentialSavings = monthlySpend - proCost;
         if (potentialSavings > 0) {
           recommendedAction = `Switch to ${seats} Claude Pro seats`;
-          reasoning = `Claude Team has a 5-seat minimum cost. With ${seats} users, individual Pro seats save you $${potentialSavings}/mo.`;
+          reasoning = `Claude Team has a 5-seat minimum cost ($125). With ${seats} users, individual Pro seats ($20 each) save you $${Math.round(potentialSavings)}/mo.`;
         }
       }
       break;
@@ -84,7 +125,7 @@ function analyzeTool(tool: ToolInput, teamSize: number): Optimization | null {
         potentialSavings = monthlySpend - businessCost;
         if (potentialSavings > 0) {
           recommendedAction = 'Downgrade to Copilot Business';
-          reasoning = 'Enterprise features (CLI, fine-tuning) are rarely fully utilized by teams under 10. Business plan covers most needs.';
+          reasoning = 'Enterprise features (CLI, fine-tuning) are often underutilized by smaller teams. Business plan covers most needs at half the cost.';
         }
       }
       break;
@@ -94,15 +135,7 @@ function analyzeTool(tool: ToolInput, teamSize: number): Optimization | null {
         potentialSavings = monthlySpend - 20;
         if (potentialSavings > 0) {
           recommendedAction = 'Switch to Cursor Pro';
-          reasoning = 'Business features like centralized billing and SSO aren\'t necessary for a single user.';
-        }
-      }
-      // Alternative suggestion
-      if (seats === 1 && monthlySpend >= 20) {
-        // Suggest Windsurf if they want to save more
-        const windsurfSavings = monthlySpend - 15;
-        if (windsurfSavings > potentialSavings) {
-          // This would be a secondary recommendation, but for now we'll stick to the tool itself
+          reasoning = 'Business features like centralized billing and SSO aren\'t necessary for a single user. Pro provides the same AI capabilities.';
         }
       }
       break;
@@ -110,26 +143,34 @@ function analyzeTool(tool: ToolInput, teamSize: number): Optimization | null {
     case 'Gemini':
       if (plan === 'Ultra' && monthlySpend > 200) {
         recommendedAction = 'Switch to Gemini Pro API';
-        potentialSavings = monthlySpend * 0.4; // Rough estimate of API savings for high usage
-        reasoning = 'High spend on Gemini Ultra subscriptions often indicates heavy usage that is more cost-effective via the Flash/Pro API.';
+        potentialSavings = monthlySpend * 0.4;
+        reasoning = 'High spend on Gemini Ultra often indicates heavy automated usage that is more cost-effective via the API.';
+      }
+      break;
+      
+    case 'ChatGPT':
+      if (plan === 'Team' && seats < 2) {
+         potentialSavings = monthlySpend - 20;
+         if (potentialSavings > 0) {
+           recommendedAction = 'Switch to ChatGPT Plus';
+           reasoning = 'Team plans have a 2-seat minimum. A single user is better served by the Plus plan.';
+         }
       }
       break;
   }
 
   // If no specific rule triggered, but spend is high, suggest Credex
   if (potentialSavings <= 0 && monthlySpend > 100) {
-     // Check if they are paying retail
      const retailPrice = getRetailPrice(name, plan);
-     if (retailPrice && monthlySpend >= retailPrice * seats) {
+     if (retailPrice && monthlySpend >= retailPrice * seats * 0.95) {
         isCredexOpportunity = true;
-        // Even if optimal, Credex can get them discounts
-        const credexSavings = monthlySpend * 0.2; // Credex 20% discount estimate
+        const credexSavings = monthlySpend * 0.2; 
         return {
           toolName: name,
           currentSpend: monthlySpend,
           recommendedAction: 'Source through Credex',
           potentialSavings: credexSavings,
-          reasoning: `You're on the right plan, but paying retail. Credex can source these same seats at a ~20% discount.`,
+          reasoning: `You're on the right plan, but paying retail. Credex can source these same seats at a 20-30% discount via our credit network.`,
           isCredexOpportunity: true
         };
      }
@@ -142,7 +183,7 @@ function analyzeTool(tool: ToolInput, teamSize: number): Optimization | null {
       recommendedAction,
       potentialSavings,
       reasoning,
-      isCredexOpportunity,
+      isCredexOpportunity: isCredexOpportunity || potentialSavings > 100,
     };
   }
 

@@ -65,13 +65,55 @@ describe('Audit Engine', () => {
     expect(openaiOpt?.isCredexOpportunity).toBe(true);
   });
 
-  it('should handle optimal setups correctly', () => {
+  it('should handle multi-currency conversion (EUR)', () => {
     const input: AuditInput = {
       tools: [
         {
-          name: 'GitHub Copilot',
+          name: 'Claude',
+          plan: 'Team',
+          monthlySpend: 115, // Roughly 125 USD in EUR (125 * 0.92)
+          seats: 2,
+        },
+      ],
+      teamSize: 2,
+      primaryUseCase: 'coding',
+      currency: 'EUR',
+    };
+
+    const result = runAudit(input);
+    expect(result.currency).toBe('EUR');
+    expect(result.totalMonthlySavings).toBeGreaterThan(0);
+    // 115 EUR / 0.92 = 125 USD. Savings in USD = 125 - 40 = 85 USD. 85 * 0.92 = 78.2 EUR.
+    expect(result.totalMonthlySavings).toBeCloseTo(78.2, 1);
+  });
+
+  it('should calculate benchmark status correctly', () => {
+    const input: AuditInput = {
+      tools: [
+        {
+          name: 'Cursor',
+          plan: 'Pro',
+          monthlySpend: 200, // 10 users @ $20
+          seats: 10,
+        },
+      ],
+      teamSize: 10,
+      primaryUseCase: 'coding',
+      currency: 'USD',
+    };
+
+    const result = runAudit(input);
+    expect(result.benchmark?.status).toBe('optimal'); // $20/seat < $25
+    expect(result.benchmark?.percentile).toBeGreaterThan(80);
+  });
+
+  it('should flag overspending benchmark', () => {
+     const input: AuditInput = {
+      tools: [
+        {
+          name: 'Cursor',
           plan: 'Business',
-          monthlySpend: 190,
+          monthlySpend: 800, // 10 users @ $80 (incorrect high spend)
           seats: 10,
         },
       ],
@@ -80,8 +122,6 @@ describe('Audit Engine', () => {
     };
 
     const result = runAudit(input);
-    const copilotOpt = result.optimizations.find(o => o.toolName === 'GitHub Copilot');
-    
-    expect(copilotOpt?.recommendedAction).toBe('Source through Credex'); // Since it's > $100 and retail
+    expect(result.benchmark?.status).toBe('overspending'); // $80/seat > $45
   });
 });

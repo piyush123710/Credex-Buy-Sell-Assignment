@@ -156,7 +156,7 @@ export default function AuditForm() {
                           <div className="space-y-2">
                             <Label className="text-xs uppercase tracking-wider text-zinc-500">Plan</Label>
                             <Select 
-                              onValueChange={(val) => form.setValue(`tools.${index}.plan`, val)}
+                              onValueChange={(val) => form.setValue(`tools.${index}.plan`, val || '')}
                               defaultValue={field.plan}
                             >
                               <SelectTrigger className="h-9">
@@ -201,14 +201,34 @@ export default function AuditForm() {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-8"
               >
-                <div className="space-y-4">
-                  <Label className="text-lg font-bold">Total Team Size</Label>
-                  <p className="text-zinc-500 text-sm">Include everyone who uses these tools, even if they share accounts.</p>
-                  <Input 
-                    type="number" 
-                    className="text-2xl h-14 font-bold"
-                    {...form.register('teamSize')}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <Label className="text-lg font-bold">Total Team Size</Label>
+                    <p className="text-zinc-500 text-sm">Include everyone who uses these tools.</p>
+                    <Input 
+                      type="number" 
+                      className="text-2xl h-14 font-bold"
+                      {...form.register('teamSize')}
+                    />
+                  </div>
+
+                  <div className="space-y-4">
+                    <Label className="text-lg font-bold">Currency</Label>
+                    <p className="text-zinc-500 text-sm">Select your reporting currency.</p>
+                    <Select 
+                      onValueChange={(val) => form.setValue('currency', val as any)}
+                      defaultValue={form.watch('currency')}
+                    >
+                      <SelectTrigger className="h-14 text-xl font-bold">
+                        <SelectValue placeholder="Select Currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USD">USD ($)</SelectItem>
+                        <SelectItem value="EUR">EUR (€)</SelectItem>
+                        <SelectItem value="GBP">GBP (£)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
@@ -247,13 +267,17 @@ export default function AuditForm() {
                       {fields.map((f, i) => (
                         <div key={f.id} className="flex justify-between items-center text-sm">
                           <span className="text-zinc-600 dark:text-zinc-400">{f.name} ({form.getValues(`tools.${i}.plan`)})</span>
-                          <span className="font-mono font-bold">${form.getValues(`tools.${i}.monthlySpend`)}/mo</span>
+                          <span className="font-mono font-bold">
+                            {form.watch('currency') === 'EUR' ? '€' : form.watch('currency') === 'GBP' ? '£' : '$'}
+                            {form.getValues(`tools.${i}.monthlySpend`)}/mo
+                          </span>
                         </div>
                       ))}
                       <div className="pt-3 border-t border-indigo-200 dark:border-indigo-800 flex justify-between items-center font-bold">
                         <span>Total Monthly Spend</span>
                         <span className="text-xl text-indigo-600">
-                          ${fields.reduce((acc, _, i) => acc + Number(form.getValues(`tools.${i}.monthlySpend`)), 0)}
+                          {form.watch('currency') === 'EUR' ? '€' : form.watch('currency') === 'GBP' ? '£' : '$'}
+                          {fields.reduce((acc, _, i) => acc + Number(form.getValues(`tools.${i}.monthlySpend`)), 0)}
                         </span>
                       </div>
                    </div>

@@ -1,4 +1,5 @@
 export type AIUseCase = 'coding' | 'writing' | 'data' | 'research' | 'mixed';
+export type Currency = 'USD' | 'EUR' | 'GBP';
 
 export type ToolName = 
   | 'Cursor' 
@@ -22,6 +23,7 @@ export interface AuditInput {
   tools: ToolInput[];
   teamSize: number;
   primaryUseCase: AIUseCase;
+  currency?: Currency;
 }
 
 export interface Optimization {
@@ -33,11 +35,20 @@ export interface Optimization {
   isCredexOpportunity: boolean;
 }
 
+export interface BenchmarkData {
+  averageSpendPerSeat: number;
+  industryBenchmark: number;
+  percentile: number;
+  status: 'optimal' | 'average' | 'overspending';
+}
+
 export interface AuditResult {
   id: string;
   totalMonthlySavings: number;
   totalAnnualSavings: number;
   optimizations: Optimization[];
   personalizedSummary?: string;
+  currency: Currency;
+  benchmark?: BenchmarkData;
   createdAt: string;
 }

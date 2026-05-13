@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, ArrowRight, ArrowLeft, Calculator, Sparkles } from 'lucide-react';
 import { auditFormSchema, AuditFormValues } from '@/lib/schema';
+import { AuditInput } from '@/lib/types';
 import { TOOLS, TOOL_PLANS, USE_CASES } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,7 +65,7 @@ export default function AuditForm() {
   const prevStep = () => setStep(step - 1);
 
   const onSubmit = (data: AuditFormValues) => {
-    const result = runAudit(data);
+    const result = runAudit(data as AuditInput);
     // In a real app, we'd save this to a DB and redirect to a shareable URL
     // For now, we'll store in session/local and redirect
     localStorage.setItem(`audit-${result.id}`, JSON.stringify(result));

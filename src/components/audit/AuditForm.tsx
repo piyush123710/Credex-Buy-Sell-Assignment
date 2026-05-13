@@ -22,7 +22,7 @@ export default function AuditForm() {
   const router = useRouter();
   
   const form = useForm<AuditFormValues>({
-    resolver: zodResolver(auditFormSchema),
+    resolver: zodResolver<AuditFormValues>(auditFormSchema),
     defaultValues: {
       tools: [],
       teamSize: 1,
@@ -56,8 +56,8 @@ export default function AuditForm() {
   }, [form]);
 
   const nextStep = async () => {
-    const fieldsToValidate = step === 1 ? ['tools'] : step === 2 ? ['teamSize', 'primaryUseCase'] : [];
-    const isValid = await form.trigger(fieldsToValidate as Array<keyof AuditFormValues>);
+    const fieldsToValidate: (keyof AuditFormValues)[] = step === 1 ? ['tools'] : step === 2 ? ['teamSize', 'primaryUseCase'] : [];
+    const isValid = await form.trigger(fieldsToValidate);
     if (isValid) setStep(step + 1);
   };
 

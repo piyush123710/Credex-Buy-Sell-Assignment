@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, ArrowLeft, Calculator, Sparkles } from 'lucide-react';
+import { Trash2, ArrowRight, ArrowLeft, Calculator, Sparkles } from 'lucide-react';
 import { auditFormSchema, AuditFormValues } from '@/lib/schema';
 import { TOOLS, TOOL_PLANS, USE_CASES } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useRouter } from 'next/navigation';
 import { runAudit } from '@/lib/audit-engine';
 
@@ -58,7 +57,7 @@ export default function AuditForm() {
 
   const nextStep = async () => {
     const fieldsToValidate = step === 1 ? ['tools'] : step === 2 ? ['teamSize', 'primaryUseCase'] : [];
-    const isValid = await form.trigger(fieldsToValidate as any);
+    const isValid = await form.trigger(fieldsToValidate as Array<keyof AuditFormValues>);
     if (isValid) setStep(step + 1);
   };
 
@@ -271,7 +270,7 @@ export default function AuditForm() {
                 </div>
 
                 <p className="text-xs text-zinc-400 text-center px-8">
-                  By clicking "Run Audit", you agree to our processing of this data. Your individual details are never shared publicly.
+                  By clicking &quot;Run Audit&quot;, you agree to our processing of this data. Your individual details are never shared publicly.
                 </p>
               </motion.div>
             )}

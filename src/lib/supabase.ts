@@ -8,7 +8,9 @@ const isMock = !supabaseUrl || !supabaseKey;
 
 export const supabase = isMock ? null : createClient(supabaseUrl, supabaseKey);
 
-export async function saveAudit(audit: any) {
+import { AuditResult } from './types';
+
+export async function saveAudit(audit: AuditResult) {
   if (isMock) {
     console.log("Mock Save Audit:", audit);
     return { data: audit, error: null };

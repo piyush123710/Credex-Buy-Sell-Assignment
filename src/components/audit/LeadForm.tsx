@@ -51,8 +51,8 @@ export default function LeadForm({ auditId, savings }: LeadFormProps) {
       }
 
       setSubmitted(true);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -67,7 +67,7 @@ export default function LeadForm({ auditId, savings }: LeadFormProps) {
           </div>
           <h3 className="text-xl font-bold">Report Sent!</h3>
           <p className="text-zinc-600 dark:text-zinc-400">
-            Check your inbox. We've sent a detailed breakdown of these savings to your email.
+            Check your inbox. We&apos;ve sent a detailed breakdown of these savings to your email.
           </p>
         </CardContent>
       </Card>
@@ -79,7 +79,7 @@ export default function LeadForm({ auditId, savings }: LeadFormProps) {
       <CardHeader className="bg-indigo-50/50 dark:bg-indigo-900/10">
         <CardTitle className="text-xl">Get the full report</CardTitle>
         <CardDescription>
-          We'll send the detailed breakdown to your inbox and notify you of new optimizations.
+          We&apos;ll send the detailed breakdown to your inbox and notify you of new optimizations.
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>

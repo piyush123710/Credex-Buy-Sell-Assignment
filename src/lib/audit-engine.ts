@@ -157,7 +157,7 @@ function analyzeTool(tool: ToolInput, teamSize: number): Optimization | null {
 }
 
 function getRetailPrice(name: ToolName, plan: string): number | null {
-  const toolPricing = (PRICING as any)[name];
+  const toolPricing = PRICING[name as keyof typeof PRICING] as Record<string, number>;
   if (toolPricing && toolPricing[plan] !== undefined) {
     return toolPricing[plan];
   }

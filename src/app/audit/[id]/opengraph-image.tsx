@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
 
-export default async function Image({ params }: { params: { id: string } }) {
+export default async function Image() {
   // In a real app, we'd fetch the audit from Supabase here
   // For the assignment, we'll use a placeholder or generic "Savings found" image
   // since we can't access localStorage in the Edge runtime.

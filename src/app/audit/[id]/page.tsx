@@ -1,61 +1,35 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { AuditResult, Optimization } from '@/lib/types';
 import { motion } from 'framer-motion';
 import { 
-  TrendingDown, 
   ArrowLeft, 
   Share2, 
   Download, 
   CheckCircle2, 
-  AlertCircle, 
   Zap, 
-  Calendar,
   MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import LeadForm from '@/components/audit/LeadForm';
 import { Input } from '@/components/ui/input';
 
 export default function AuditResultsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [result, setResult] = useState<AuditResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [summaryLoading, setSummaryLoading] = useState(false);
-  const [isPublic, setIsPublic] = useState(false);
+  
+  const isPublic = searchParams.get('view') === 'public';
 
-  useEffect(() => {
-    // Check if we're in public mode (via query param or if no local record exists)
-    const searchParams = new URLSearchParams(window.location.search);
-    setIsPublic(searchParams.get('view') === 'public');
-
-    const saved = localStorage.getItem(`audit-${params.id}`);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setResult(parsed);
-      
-      if (!parsed.personalizedSummary) {
-        fetchSummary(parsed);
-      }
-    }
-    setLoading(false);
-  }, [params.id]);
-
-  const handleShare = () => {
-    const url = `${window.location.origin}/audit/${params.id}?view=public`;
-    navigator.clipboard.writeText(url);
-    alert("Public share link copied to clipboard! (Emails and company details will be hidden)");
-  };
-
-  const fetchSummary = async (auditData: AuditResult) => {
+  const fetchSummary = useCallback(async (auditData: AuditResult) => {
     setSummaryLoading(true);
     try {
-      // Find the original form data to send to AI
       const formDataStr = localStorage.getItem('spendwise-audit-form');
       const formData = formDataStr ? JSON.parse(formDataStr) : {};
 
@@ -74,13 +48,38 @@ export default function AuditResultsPage() {
     } finally {
       setSummaryLoading(false);
     }
+  }, [params.id]);
+
+  useEffect(() => {
+    const initAudit = async () => {
+      const saved = localStorage.getItem(`audit-${params.id}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setResult(parsed);
+        
+        if (!parsed.personalizedSummary) {
+          fetchSummary(parsed);
+        }
+      }
+      setLoading(false);
+    };
+
+    initAudit();
+  }, [params.id, fetchSummary]);
+
+  const handleShare = () => {
+    const url = `${window.location.origin}/audit/${params.id}?view=public`;
+    navigator.clipboard.writeText(url);
+    alert("Public share link copied to clipboard! (Emails and company details will be hidden)");
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading Audit...</div>;
-  if (!result) return <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-    <h1 className="text-2xl font-bold">Audit Not Found</h1>
-    <Button onClick={() => router.push('/')}>Go Home</Button>
-  </div>;
+  if (!result) return (
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+      <h1 className="text-2xl font-bold">Audit Not Found</h1>
+      <Button onClick={() => router.push('/')}>Go Home</Button>
+    </div>
+  );
 
   const hasHighSavings = result.totalMonthlySavings > 500;
   const isOptimal = result.totalMonthlySavings < 50;
@@ -122,7 +121,7 @@ export default function AuditResultsPage() {
               </h1>
               <p className="text-indigo-100 text-lg max-w-md">
                 {isOptimal 
-                  ? "Great job! You're already on the most efficient plans for your current toolset." 
+                  ? "Great job! You&apos;re already on the most efficient plans for your current toolset." 
                   : `You could be saving $${result.totalMonthlySavings.toLocaleString()} every single month by making a few simple changes.`}
               </p>
             </div>
@@ -150,7 +149,7 @@ export default function AuditResultsPage() {
                 </div>
                 <div>
                   <CardTitle>AI Personalized Summary</CardTitle>
-                  <CardDescription>Tailored insights based on your team's workflow</CardDescription>
+                  <CardDescription>Tailored insights based on your team&apos;s workflow</CardDescription>
                 </div>
               </CardHeader>
               <CardContent>
@@ -162,7 +161,7 @@ export default function AuditResultsPage() {
                   </div>
                 ) : (
                   <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed italic">
-                    "{result.personalizedSummary || "Generating your personalized summary..."}"
+                    &quot;{result.personalizedSummary || "Generating your personalized summary..."}&quot;
                   </p>
                 )}
               </CardContent>
@@ -222,9 +221,9 @@ export default function AuditResultsPage() {
         {isOptimal && (
            <Card className="text-center p-12 border-dashed">
               <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
-              <CardTitle className="text-2xl mb-2">You're Optimized!</CardTitle>
+              <CardTitle className="text-2xl mb-2">You&apos;re Optimized!</CardTitle>
               <CardDescription className="max-w-md mx-auto mb-8">
-                Your current AI spend is already aligned with the best industry benchmarks. We'll notify you if new plans or credit pools open up.
+                Your current AI spend is already aligned with the best industry benchmarks. We&apos;ll notify you if new plans or credit pools open up.
               </CardDescription>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                  <Input placeholder="Email address" className="max-w-xs" />

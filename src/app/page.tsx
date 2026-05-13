@@ -1,7 +1,6 @@
 import React from 'react';
 import AuditForm from '@/components/audit/AuditForm';
 import { ShieldCheck, Zap, TrendingDown, Users, Globe } from 'lucide-react';
-import Image from 'next/image';
 
 export default function LandingPage() {
   return (
@@ -41,7 +40,7 @@ export default function LandingPage() {
               Stop Overpaying for <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">AI Infrastructure</span>
             </h1>
             <p className="text-xl text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-xl">
-              Most startups waste 20-40% on AI tool seats they don't need. Get a free, instant audit of your spend and find immediate savings.
+              Most startups waste 20-40% on AI tool seats they don&apos;t need. Get a free, instant audit of your spend and find immediate savings.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-6">
@@ -90,7 +89,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl font-bold mb-4">How SpendWise Works</h2>
-            <p className="text-zinc-600 dark:text-zinc-400">Our engine analyzes your stack against 50+ optimization rules and Credex's proprietary credit marketplace data.</p>
+            <p className="text-zinc-600 dark:text-zinc-400">Our engine analyzes your stack against 50+ optimization rules and Credex&apos;s proprietary credit marketplace data.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -107,7 +106,7 @@ export default function LandingPage() {
             <BenefitCard 
               icon={<TrendingDown className="w-6 h-6" />}
               title="Credex Credits"
-              description="Get the exact same tools at 20-50% off by sourcing through Credex's credit ecosystem."
+              description="Get the exact same tools at 20-50% off by sourcing through Credex&apos;s credit ecosystem."
             />
           </div>
         </div>

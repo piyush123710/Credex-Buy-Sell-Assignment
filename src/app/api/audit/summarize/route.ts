@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { AuditResult, Optimization } from '@/lib/types';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
@@ -7,7 +8,7 @@ const anthropic = new Anthropic({
 
 export async function POST(req: NextRequest) {
   try {
-    const { auditData } = await req.json();
+    const { auditData }: { auditData: AuditResult & { primaryUseCase: string; teamSize: number } } = await req.json();
 
     if (!process.env.ANTHROPIC_API_KEY) {
       console.warn("ANTHROPIC_API_KEY not found. Using fallback summary.");
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
 - Team Size: ${auditData.teamSize}
 - Primary Use Case: ${auditData.primaryUseCase}
 - Total Monthly Savings Found: $${auditData.totalMonthlySavings}
-- Key Optimizations: ${auditData.optimizations.map((o: any) => `${o.toolName}: ${o.recommendedAction}`).join(', ')}
+- Key Optimizations: ${auditData.optimizations.map((o: Optimization) => `${o.toolName}: ${o.recommendedAction}`).join(', ')}
 
 Write a professional summary for a founder. Highlight the biggest gap and mention Credex if savings are >$500/mo.`
         }
@@ -42,7 +43,7 @@ Write a professional summary for a founder. Highlight the biggest gap and mentio
   }
 }
 
-function getFallbackSummary(data: any) {
+function getFallbackSummary(data: (AuditResult & { primaryUseCase: string; teamSize: number }) | null) {
   if (!data) return "Based on our analysis, your AI stack has several optimization opportunities. Implementing the recommended plan changes could significantly reduce your monthly overhead while maintaining your current development velocity.";
   
   const toolCount = data.optimizations?.length || 0;

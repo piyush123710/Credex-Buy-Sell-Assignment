@@ -1,7 +1,8 @@
 import { z } from 'zod';
+import { TOOLS } from './constants';
 
 export const toolInputSchema = z.object({
-  name: z.string(),
+  name: z.enum(TOOLS as [string, ...string[]]),
   plan: z.string(),
   monthlySpend: z.coerce.number().min(0),
   seats: z.coerce.number().min(1),

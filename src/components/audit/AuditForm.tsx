@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, ArrowRight, ArrowLeft, Calculator, Sparkles } from 'lucide-react';
@@ -22,7 +22,7 @@ export default function AuditForm() {
   const router = useRouter();
   
   const form = useForm<AuditFormValues>({
-    resolver: zodResolver<AuditFormValues>(auditFormSchema),
+    resolver: zodResolver(auditFormSchema) as Resolver<AuditFormValues>,
     defaultValues: {
       tools: [],
       teamSize: 1,
